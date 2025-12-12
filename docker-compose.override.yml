@@ -3,7 +3,7 @@ services:
   hcert-validator:
     build: gdhcn-helper
     container_name: hcert-validator
-#    image: costateixeira/gdhcn-validator:0.2.0
+    #    image: costateixeira/gdhcn-validator:0.2.0
     restart: unless-stopped
     ports:
       - "8089:8080"
@@ -47,9 +47,13 @@ services:
       - ./config/fhir/custom:/custom
       - ./config/fhir/apps:/apps
     ports:
-      - "8080:8080"   # host access (optional)      
+      - "8080:8080" # host access (optional)
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/fhir/metadata >/dev/null || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://localhost:8080/fhir/metadata >/dev/null || exit 1",
+        ]
       interval: 15s
       timeout: 5s
       retries: 20
@@ -61,13 +65,17 @@ services:
     image: europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox:v4.0.12
     restart: unless-stopped
     ports:
-      - "8087:8080"   # host access (optional)
+      - "8087:8080" # host access (optional)
     links:
       - matchbox-db
     volumes:
       - ./matchbox/config:/config
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/fhir/metadata >/dev/null || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://localhost:8080/fhir/metadata >/dev/null || exit 1",
+        ]
       interval: 15s
       timeout: 5s
       retries: 20
@@ -81,13 +89,13 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: 'matchbox'
-      POSTGRES_USER: 'matchbox'
-      POSTGRES_PASSWORD: 'matchbox'
-      SPRING_CONFIG_LOCATION: 'file:///config/application.yml'
-      
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+      POSTGRES_DB: "matchbox"
+      POSTGRES_USER: "matchbox"
+      POSTGRES_PASSWORD: "matchbox"
+      SPRING_CONFIG_LOCATION: "file:///config/application.yml"
+
+    # volumes:
+    #   - pgdata:/var/lib/postgresql/data
     # networks: [backend]
 
   # smart-helper (this app)
@@ -97,10 +105,10 @@ services:
       dockerfile: Dockerfile
     container_name: smart-helper
     environment:
-      - FHIR_HOST=http://fhir-server:8080/fhir     # <-- use the service name
+      - FHIR_HOST=http://fhir-server:8080/fhir # <-- use the service name
       - MATCHBOX_HOST=http://matchbox:8080/matchboxv3/fhir
       - SMART_HELPER_LOG=DEBUG
-      - SMART_HELPER_LOG_BODY_LIMIT=8000      
+      - SMART_HELPER_LOG_BODY_LIMIT=8000
       # - FHIR_TOKEN=...                            # optional
       - FHIR_TIMEOUT=90
     ports:
@@ -111,14 +119,17 @@ services:
     #   fhir-server:
     #     condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health >/dev/null || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://localhost:8000/health >/dev/null || exit 1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 20
     # networks: [backend]
-
 # networks:
 #   backend:
 #     driver: bridge
-volumes:
-  pgdata:   # declare the volume    
+# volumes:
+#   pgdata:   # declare the volume

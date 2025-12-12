@@ -11,6 +11,10 @@
     </gitb:description>
     <gitb:version>1.0</gitb:version>
   </metadata>
+  
+  <variables>
+    <var name="uploadedFile" type="binary"/>
+  </variables>
 
   <actors>
     <gitb:actor id="User" role="SUT"/>
@@ -23,13 +27,13 @@
 
     <!-- 1) USER UPLOADS BARCODE IMAGE → /decode/image -->
     <interact id="userFileUpload" desc="Upload barcode image (PNG/JPG)">
-      <request desc="File to upload:" name="uploadedFile" inputType="UPLOAD" required="true"/>
+      <request desc="Upload a QRCode:" inputType="UPLOAD" required="true">$uploadedFile</request>
     </interact>
 
     <assign to="imgPart{name}">"image"</assign>
     <assign to="imgPart{contentType}">"image/png"</assign>
     <assign to="imgPart{fileName}">"barcode.png"</assign>
-    <assign to="imgPart{content}">$userFileUpload{uploadedFile}</assign>
+    <assign to="imgPart{content}">$uploadedFile</assign>
     <assign to="imgParts" append="true">$imgPart</assign>
 
     <assign to="imgHeaders{Accept}">"application/json"</assign>
