@@ -3,35 +3,72 @@ volumes:
   gitb-dbdata:
 services:
   gitb-redis:
-    image: redis:7.2.5
+    image: isaitb/gitb-redis:1.29.0
+    container_name: itb-redis
     restart: unless-stopped
   gitb-mysql:
-    image: isaitb/gitb-mysql:latest
+    image: isaitb/gitb-mysql:1.29.0
+    container_name: itb-mysql
     restart: unless-stopped
+    environment:
+      # The password for the root user of the Test Bed’s MySQL database. This is used for the initial database setup
+      # and subsequent health checks. This must be changed for a production instance.
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      # The password for the DB user (named gitb) that the Test Bed uses to connect to its database.
+      # This must be changed for a production instance.
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     volumes:
       - gitb-dbdata:/var/lib/mysql
     healthcheck:
-      test: "/usr/bin/mysql --user=root --password=$$MYSQL_ROOT_PASSWORD --execute \"SHOW DATABASES;\""
+      test: "/usr/bin/mysql --user=root --password=$$MYSQL_ROOT_PASSWORD --execute
+        \"SHOW DATABASES;\""
       interval: 3s
       retries: 10
   gitb-srv:
-    image: isaitb/gitb-srv:nightly
+    image: isaitb/gitb-srv:1.29.0
+    container_name: itb-srv
     restart: unless-stopped
+    environment:
+      # A key used to authenticate and verify calls between the gitb-ui and gitb-srv components. The value set here must
+      # match the value configured for HMAC_KEY in the gitb-ui component. This must be changed for a production instance.
+      - HMAC_KEY=${HMAC_KEY}
   gitb-ui:
-    image: isaitb/gitb-ui:nightly
+    image: isaitb/gitb-ui:1.29.0
+    container_name: itb-ui
     restart: unless-stopped
     ports:
       - "10003:9000"
-    volumes:
-      - gitb-repo:/gitb-repository
-      - ./initconfig/data/:/gitb-repository/data/in/:rw
     environment:
+      # When set to "production" the Test Bed will ensure that all secrets are appropriately configured. Failure to do so
+      # will prevent the Test Bed from starting up. While not in production mode, the Test Bed will include a warning that
+      # it is configured for development purposes.
+      - TESTBED_MODE=production
+      # The value set here depends on how the Test Bed is publicly exposed to users and should match your proxy setup.
+      - TESTBED_HOME_LINK=https://itb-who.ihe-catalyst.net/
+      # This corresponds to the path at which session cookies are bound. The value here is typically the path segment
+      # following the host name as configured in TESTBED_HOME_LINK.
+      - AUTHENTICATION_COOKIE_PATH=/
+      # The password used to access the Test Bed’s database, which must be set to match the value provided for the MYSQL_PASSWORD
+      # variable of the gitb-mysql component. This must be changed for a production instance.
+      - DB_DEFAULT_PASSWORD=${DB_DEFAULT_PASSWORD}
+      # A key used to authenticate and verify calls between the gitb-ui and gitb-srv components. The value set here must
+      # match the value configured for HMAC_KEY in the gitb-srv component. This must be changed for a production instance.
+      - HMAC_KEY=${HMAC_KEY}
+      # This is used to encrypt and verify user session tokens and must be set to a random string of at least 32 characters’ length.
+      # This must be changed for a production instance.
+      - APPLICATION_SECRET=${APPLICATION_SECRET}
+      # This is used to encrypt sensitive values recorded in the Test Bed’s database (e.g. custom organisation properties marked as “secrets”).
+      # This must be changed for a production instance.
+      - MASTER_PASSWORD=${MASTER_PASSWORD}
       # This is the key to decrypt the initialisation data archive (see above).
       - DATA_ARCHIVE_KEY=WHO_ITB1
       # Flag to enable the Test Bed's REST API. This can be very useful for efficient test case development.
       - AUTOMATION_API_ENABLED=true
       # Activate the generic GITB theme.
       - THEME=who
+    volumes:
+      - gitb-repo:/gitb-repository
+      - ./initconfig/data/:/gitb-repository/data/in/:rw
     depends_on:
       gitb-redis:
         condition: service_started
@@ -39,9 +76,3 @@ services:
         condition: service_healthy
       gitb-srv:
         condition: service_started
-  # who-helper-services:
-  #   build:
-  #     context: ./who-helper
-  #   restart: unless-stopped
-  #   ports:
-  #     - "10005:8181"
