@@ -44,13 +44,14 @@ services:
       # it is configured for development purposes.
       - TESTBED_MODE=production
       # The value set here depends on how the Test Bed is publicly exposed to users and should match your proxy setup.
-      - TESTBED_HOME_LINK=https://itb-who.ihe-catalyst.net/
+      - TESTBED_HOME_LINK=https://itb-who.ihe-catalyst.net/itb/
       # This corresponds to the path at which session cookies are bound. The value here is typically the path segment
       # following the host name as configured in TESTBED_HOME_LINK.
-      - AUTHENTICATION_COOKIE_PATH=/
+      - AUTHENTICATION_COOKIE_PATH=/itb/
+      - WEB_CONTEXT_ROOT=/itb/
       # The password used to access the Test Bed’s database, which must be set to match the value provided for the MYSQL_PASSWORD
       # variable of the gitb-mysql component. This must be changed for a production instance.
-      - DB_DEFAULT_PASSWORD=${DB_DEFAULT_PASSWORD}
+      - DB_DEFAULT_PASSWORD=${MYSQL_PASSWORD}
       # A key used to authenticate and verify calls between the gitb-ui and gitb-srv components. The value set here must
       # match the value configured for HMAC_KEY in the gitb-srv component. This must be changed for a production instance.
       - HMAC_KEY=${HMAC_KEY}
